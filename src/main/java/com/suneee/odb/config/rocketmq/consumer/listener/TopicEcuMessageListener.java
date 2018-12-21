@@ -8,6 +8,8 @@ import com.suneee.odb.config.serializer.constant.Constants;
 import com.suneee.odb.config.serializer.impl.KryoSerializer;
 import com.suneee.odb.model.rocketmq.BatchEcuData;
 import com.suneee.odb.model.rocketmq.EcuData;
+import com.suneee.odb.service.AssemblyData;
+import com.suneee.odb.util.SystemCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,8 +17,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * @ ECU工况主题类消息监听处理器
@@ -29,6 +29,9 @@ public class TopicEcuMessageListener implements MessageListenerConcurrently {
 
     @Autowired
     private KryoSerializer kryoSerializer;
+
+    @Autowired
+    private AssemblyData assemblyData;
 
     @Override
     public ConsumeConcurrentlyStatus consumeMessage (List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
@@ -44,7 +47,6 @@ public class TopicEcuMessageListener implements MessageListenerConcurrently {
             return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         }
         List<EcuData> allDatas = new ArrayList<> ();
-        BlockingQueue<EcuData> ecuDataQueue= new LinkedBlockingDeque<> ();
         try {
             for (MessageExt msg : msgs) {
                 if (msg.getTopic ().equals (Constants.MQ_TOPIC_ECU)) {
@@ -71,9 +73,18 @@ public class TopicEcuMessageListener implements MessageListenerConcurrently {
             flag = true;
         }
         boolean consumerRet = true; //消费处理结果
-        {
-            //批量处理收到的ECU工况数据信息，根据处理结果设置 consumerRet。
-            log.info ("接收到的ECU 数据为:--->[{}]", allDatas.toString ());
+        try{
+            EcuData ecuData = allDatas.get (0);
+            String dtuId = ecuData.getDtuId ();
+
+//            log.info ("接收到的ECU 数据为:--->[{}],DtuID =[{}],数据个数=[{}]", ecuData.getValues (),dtuId,ecuData.getValues ().size ());
+            SystemCache.addEcuData (ecuData);
+            assemblyData.reportingDarta ();
+//            log.info ("接收到的ECU 数据为:--->[{}]", SystemCache.getEcuSize ());
+            consumerRet=true;
+        }catch (Exception e){
+            consumerRet=false;
+            e.printStackTrace ();
         }
         return consumerRet ? ConsumeConcurrentlyStatus.CONSUME_SUCCESS : ConsumeConcurrentlyStatus.RECONSUME_LATER;
     }

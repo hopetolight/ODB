@@ -65,5 +65,14 @@ public class HttpResult {
         }
     }
 
-
+    @Override
+    public String toString () {
+        final StringBuilder sb = new StringBuilder ("{");
+        sb.append ("\"statsu\":")
+                .append (statsu);
+        sb.append (",\"data\":\"")
+                .append (data).append ('\"');
+        sb.append ('}');
+        return sb.toString ();
+    }
 }

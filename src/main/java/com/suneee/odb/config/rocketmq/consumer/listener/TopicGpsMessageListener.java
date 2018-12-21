@@ -36,10 +36,6 @@ public class TopicGpsMessageListener implements MessageListenerConcurrently {
 			Iterator<MessageExt> it = msgs.iterator();
 			while(it.hasNext()){
 				MessageExt msg = it.next();
-
-
-
-
 				if( msg.getTopic().equals(Constants.MQ_TOPIC_GPS) ){
 					String tag  = msg.getTags();
 					if( tag!=null && tag.equals( GpsInfo.class.getSimpleName()) ){						

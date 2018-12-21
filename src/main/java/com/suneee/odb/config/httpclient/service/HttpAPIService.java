@@ -39,4 +39,12 @@ public interface HttpAPIService {
     public HttpResult doPost(String url, String jsonString);
 
 
+    /**
+     * POST 请求 带 key-value 参数
+     * @Author:ChenBo
+     * @DateTime 2018/11/6:14:52
+     */
+    public HttpResult doPost(String url ,Map<String,String> paramMap);
+
+
 }
